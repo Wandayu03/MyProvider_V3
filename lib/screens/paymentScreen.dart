@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:internet_provider/models/paymentModel.dart';
 import 'package:internet_provider/theme/appframe.dart';
 import 'package:intl/intl.dart';
 import 'package:qr_flutter/qr_flutter.dart';
@@ -6,26 +7,34 @@ import '../models/packageModel.dart';
 import '../theme/appframe.dart';
 import 'successScreen.dart';
 
-class PembayaranScreen extends StatefulWidget {
-  final InternetPackage package;
-  const PembayaranScreen({super.key, required this.package});
+class Paymentscreen extends StatefulWidget {
+  final PaymentType paymentType; 
+  const Paymentscreen({super.key, required this.paymentType});
 
   @override
-  State<PembayaranScreen> createState() => _PembayaranScreenState();
+  State<Paymentscreen> createState() => _PaymentScreenState();
 }
 
-class _PembayaranScreenState extends State<PembayaranScreen> {
+class _PaymentScreenState extends State<Paymentscreen> {
   final _currency = NumberFormat.currency(locale: 'id_ID', symbol: 'Rp ', decimalDigits: 0);
   bool _isLoading = false;
 
-  // Data QRIS (dalam produksi ini berisi string QR dari payment gateway)
-  String get _qrisData =>
-      'MYPROVIDER|PKG:${widget.package.id}|AMT:${widget.package.total}|TRX:${DateTime.now().millisecondsSinceEpoch}';
+  int get _total => switch (widget.paymentType) {
+  PackagePayment p => p.package.total,
+  PulsaPayment p => int.parse(p.amount.replaceAll(RegExp(r'[^0-9]'), '')),
+  };
 
+  // Data QRIS (dalam produksi ini berisi string QR dari payment gateway)
+  String get _qrisData => switch (widget.paymentType) {
+    PackagePayment p => 'MYPROVIDER|PKG:${p.package.id}|AMT:$_total|TRX:${DateTime.now().millisecondsSinceEpoch}',
+    PulsaPayment p => 'MYPROVIDER|PULSA:${p.phoneNumber}|AMT:$_total|TRX:${DateTime.now().millisecondsSinceEpoch}',
+  };
+
+  // transaction ID pake tanggal waktu milisecond 5 karakter awal
   String get _transactionId =>
       'TRX${DateTime.now().millisecondsSinceEpoch.toString().substring(5)}';
 
-  Future<void> _konfirmasiPembayaran() async {
+  Future<void> _confirmPayment() async {
     setState(() => _isLoading = true);
     await Future.delayed(const Duration(seconds: 2)); // simulasi verifikasi
     if (!mounted) return;
@@ -34,8 +43,8 @@ class _PembayaranScreenState extends State<PembayaranScreen> {
     Navigator.pushReplacement(
       context,
       MaterialPageRoute(
-        builder: (_) => SuksesScreen(
-          package: widget.package,
+        builder: (_) => SuccessScreen(
+          payment: widget.paymentType,
           transactionId: _transactionId,
         ),
       ),
@@ -44,7 +53,6 @@ class _PembayaranScreenState extends State<PembayaranScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final pkg = widget.package;
     return Scaffold(
       appBar: AppBar(
         title: const Text('Pembayaran QRIS'),
@@ -60,21 +68,11 @@ class _PembayaranScreenState extends State<PembayaranScreen> {
             // Ringkasan
             _SectionCard(
               title: 'Ringkasan Pesanan',
-              child: Column(
-                children: [
-                  _Row(label: 'Paket', value: '${pkg.name} ${pkg.speed}'),
-                  _Row(label: 'Periode', value: '1 Bulan'),
-                  _Row(label: 'Harga', value: _currency.format(pkg.pricePerMonth)),
-                  _Row(label: 'PPN 11%', value: _currency.format(pkg.ppn)),
-                  const Divider(),
-                  _Row(
-                    label: 'Total Bayar',
-                    value: _currency.format(pkg.total),
-                    isBold: true,
-                    valueColor: Appframe.primaryDark,
-                  ),
-                ],
-              ),
+              child: switch (widget.paymentType) {
+                PackagePayment p => _RingkasanPaket(package: p.package, currency: _currency),
+                PulsaPayment p => _RingkasanPulsa(amount: p.amount, phoneNumber: p.phoneNumber, currency: _currency),
+                },
+              
             ),
             const SizedBox(height: 16),
 
@@ -131,7 +129,7 @@ class _PembayaranScreenState extends State<PembayaranScreen> {
                   const SizedBox(height: 12),
 
                   Text(
-                    _currency.format(pkg.total),
+                    _currency.format(_total),
                     style: const TextStyle(
                         fontSize: 24,
                         fontWeight: FontWeight.w700,
@@ -165,7 +163,7 @@ class _PembayaranScreenState extends State<PembayaranScreen> {
             const SizedBox(height: 24),
 
             ElevatedButton(
-              onPressed: _isLoading ? null : _konfirmasiPembayaran,
+              onPressed: _isLoading ? null : _confirmPayment,
               child: _isLoading
                   ? const SizedBox(
                       height: 22,
@@ -242,6 +240,59 @@ class _Row extends StatelessWidget {
                   color: valueColor ?? Colors.black87)),
         ],
       ),
+    );
+  }
+}
+
+class _RingkasanPaket extends StatelessWidget {
+  final InternetPackage package;
+  final NumberFormat currency;
+  const _RingkasanPaket({required this.package, required this.currency});
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        _Row(label: 'Paket', value: '${package.name} ${package.quota}'),
+        _Row(label: 'Periode', value: '1 Bulan'),
+        _Row(label: 'Harga', value: currency.format(package.pricePerMonth)),
+        _Row(label: 'PPN 11%', value: currency.format(package.ppn)),
+        const Divider(),
+        _Row(
+          label: 'Total Bayar',
+          value: currency.format(package.total),
+          isBold: true,
+          valueColor: Appframe.primaryDark,
+        ),
+      ],
+    );
+  }
+}
+
+class _RingkasanPulsa extends StatelessWidget {
+  final String amount;
+  final String phoneNumber;
+  final NumberFormat currency;
+  const _RingkasanPulsa({
+    required this.amount,
+    required this.phoneNumber,
+    required this.currency,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        _Row(label: 'Nomor HP', value: phoneNumber),
+        _Row(label: 'Nominal Pulsa', value: amount),
+        const Divider(),
+        _Row(
+          label: 'Total Bayar',
+          value: amount,
+          isBold: true,
+          valueColor: Appframe.primaryDark,
+        ),
+      ],
     );
   }
 }

@@ -3,14 +3,14 @@ import 'package:flutter/services.dart';
 import '../theme/appframe.dart';
 import 'homeScreen.dart';
  
-class Login extends StatefulWidget {
-  const Login({super.key});
+class Loginscreen extends StatefulWidget {
+  const Loginscreen({super.key});
  
   @override
-  State<Login> createState() => _LoginState();
+  State<Loginscreen> createState() => _LoginState();
 }
  
-class _LoginState extends State<Login> {
+class _LoginState extends State<Loginscreen> {
   final _formKey = GlobalKey<FormState>();
   final _identifierCtrl = TextEditingController();
   final _passCtrl = TextEditingController();
@@ -101,7 +101,7 @@ class _LoginState extends State<Login> {
                       ),
                 ),
                 Text(
-                  'Koneksi cepat, hidup lancar',
+                  'Koneksi cepat',
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                         color: Colors.grey[500],
                       ),

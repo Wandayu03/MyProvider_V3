@@ -1,18 +1,36 @@
 import 'package:flutter/material.dart';
+import 'package:internet_provider/models/paymentModel.dart';
 import 'package:intl/intl.dart';
 import '../models/packageModel.dart';
 import '../theme/appframe.dart';
 import 'homeScreen.dart';
+import 'package:intl/date_symbol_data_local.dart';
 
-class SuksesScreen extends StatelessWidget {
-  final InternetPackage package;
+class SuccessScreen extends StatelessWidget {
+  final PaymentType payment;
   final String transactionId;
 
-  const SuksesScreen({
+  const SuccessScreen({
     super.key,
-    required this.package,
+    required this.payment,
     required this.transactionId,
   });
+
+  
+  String get _subtitle => switch (payment) {
+    PackagePayment p => 'Paket ${p.package.name} ${p.package.quota} Anda sudah aktif.',
+    PulsaPayment p => 'Pulsa ${p.amount} berhasil dikirim ke ${p.phoneNumber}.',
+  };
+
+  String get _namaItem => switch (payment) {
+    PackagePayment p => '${p.package.name} ${p.package.quota}',
+    PulsaPayment p => 'Pulsa ${p.amount}',
+  };
+
+  String get _nominal => switch (payment) {
+    PackagePayment p => NumberFormat.currency(locale: 'id_ID', symbol: 'Rp ', decimalDigits: 0).format(p.package.total),
+    PulsaPayment p => p.amount,
+  };
 
   @override
   Widget build(BuildContext context) {
@@ -21,7 +39,7 @@ class SuksesScreen extends StatelessWidget {
     final dateStr = DateFormat('dd MMMM yyyy, HH:mm', 'id_ID').format(now);
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF4F6F5),
+      backgroundColor: Colors.white,
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.all(24),
@@ -29,11 +47,10 @@ class SuksesScreen extends StatelessWidget {
             children: [
               const Spacer(),
 
-              // Success icon
               Container(
                 width: 100,
                 height: 100,
-                decoration: BoxDecoration(
+                decoration: const BoxDecoration(
                   color: Appframe.primaryLight,
                   shape: BoxShape.circle,
                 ),
@@ -45,17 +62,19 @@ class SuksesScreen extends StatelessWidget {
               const Text(
                 'Pembayaran Berhasil!',
                 style: TextStyle(
-                    fontSize: 24, fontWeight: FontWeight.w700, color: Appframe.primaryDark),
+                    fontSize: 24,
+                    fontWeight: FontWeight.w700,
+                    color: Appframe.primaryDark),
               ),
               const SizedBox(height: 8),
+
               Text(
-                'Paket ${package.name} ${package.speed} Anda sudah aktif.',
+                _subtitle, // ← pakai getter
                 textAlign: TextAlign.center,
                 style: TextStyle(fontSize: 14, color: Colors.grey[600]),
               ),
               const SizedBox(height: 28),
 
-              // Receipt card
               Container(
                 width: double.infinity,
                 padding: const EdgeInsets.all(20),
@@ -65,8 +84,8 @@ class SuksesScreen extends StatelessWidget {
                 ),
                 child: Column(
                   children: [
-                    _receiptRow('Paket', '${package.name} ${package.speed}'),
-                    _receiptRow('Nominal', currency.format(package.total)),
+                    _receiptRow('Item', _namaItem),       // ← pakai getter
+                    _receiptRow('Nominal', _nominal),     // ← pakai getter
                     _receiptRow('No. Transaksi', transactionId),
                     _receiptRow('Tanggal', dateStr),
                     const Divider(height: 20),
@@ -76,14 +95,16 @@ class SuksesScreen extends StatelessWidget {
                         const Text('Status',
                             style: TextStyle(fontSize: 13, color: Colors.grey)),
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 12, vertical: 4),
                           decoration: BoxDecoration(
                             color: Appframe.primaryLight,
                             borderRadius: BorderRadius.circular(20),
                           ),
                           child: const Row(
                             children: [
-                              Icon(Icons.check_circle, color: Appframe.primary, size: 14),
+                              Icon(Icons.check_circle,
+                                  color: Appframe.primary, size: 14),
                               SizedBox(width: 4),
                               Text('SUKSES',
                                   style: TextStyle(
@@ -104,17 +125,18 @@ class SuksesScreen extends StatelessWidget {
               ElevatedButton(
                 onPressed: () => Navigator.pushAndRemoveUntil(
                   context,
-                  MaterialPageRoute(builder: (_) => const HomeScreen(identifier: '')),
+                  MaterialPageRoute(
+                      builder: (_) => const HomeScreen(identifier: '')),
                   (route) => false,
                 ),
                 child: const Text('Kembali ke Beranda'),
               ),
               const SizedBox(height: 12),
-              TextButton(
+              /*TextButton(
                 onPressed: () {},
                 child: const Text('Unduh Bukti Pembayaran',
                     style: TextStyle(color: Appframe.primary)),
-              ),
+              ),*/
               const SizedBox(height: 12),
             ],
           ),
@@ -135,7 +157,8 @@ class SuksesScreen extends StatelessWidget {
           Flexible(
             child: Text(value,
                 textAlign: TextAlign.right,
-                style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500)),
+                style: const TextStyle(
+                    fontSize: 13, fontWeight: FontWeight.w500)),
           ),
         ],
       ),

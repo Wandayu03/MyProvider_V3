@@ -1,241 +1,53 @@
 import 'package:flutter/material.dart';
+import 'package:internet_provider/models/packageModel.dart';
+import 'package:internet_provider/screens/historyScreen.dart';
 import 'package:internet_provider/screens/loginScreen.dart';
 import 'package:internet_provider/screens/packageScreen.dart';
+import 'package:internet_provider/screens/paymentScreen.dart';
+import 'package:internet_provider/screens/profileScreen.dart';
+import '../models/paymentModel.dart';
 import '../theme/appframe.dart';
-import '../screens/loginScreen.dart';
-import '../screens/packageScreen.dart';
 
-class HomeScreen extends StatelessWidget {
+
+class HomeScreen extends StatefulWidget {
   final String identifier;
   const HomeScreen({super.key, required this.identifier});
 
+  @override
+  State<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> {
+  int _currentIndex = 0;
+
+  //ambil display name
   String get displayName {
-    if (identifier.contains('@')) return identifier.split('@').first;
-    if (identifier.startsWith('0') || identifier.startsWith('+')) {
-      return identifier.length > 7
-          ? '${identifier.substring(0, 4)}****${identifier.substring(identifier.length - 3)}'
-          : identifier;
+    final id = widget.identifier;
+    if (id.contains('@')) return id.split('@').first;
+    if (id.startsWith('0') || id.startsWith('+')) {
+      return id.length > 7
+          ? '${id.substring(0, 4)}****${id.substring(id.length - 3)}'
+          : id;
     }
-    return identifier;
+    return id.isEmpty ? 'Pengguna' : id;
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF4F6F5),
-      body: SafeArea(
-        child: CustomScrollView(
-          slivers: [
-            SliverAppBar(
-              expandedHeight: 180,
-              floating: false,
-              pinned: true,
-              backgroundColor: Appframe.primary,
-              automaticallyImplyLeading: false,
-              actions: [
-                IconButton(
-                  icon: const Icon(Icons.logout, color: Colors.white),
-                  onPressed: () => _confirmLogout(context),
-                ),
-              ],
-              flexibleSpace: FlexibleSpaceBar(
-                background: Container(
-                  color: Appframe.primary,
-                  padding: const EdgeInsets.fromLTRB(20, 60, 20, 16),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          Container(
-                            width: 44,
-                            height: 44,
-                            decoration: BoxDecoration(
-                              color: Colors.white.withOpacity(0.2),
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            child: const Icon(Icons.wifi, color: Colors.white),
-                          ),
-                          const SizedBox(width: 12),
-                          Text(
-                            'MyProvider',
-                            style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 12),
-                      Text(
-                        'Halo, $displayName 👋',
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 20,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                      const Text(
-                        'Paket aktif hingga 30 April 2025',
-                        style: TextStyle(color: Colors.white70, fontSize: 13),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-
-            SliverToBoxAdapter(
-              child: Padding(
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Stats row
-                    Row(
-                      children: [
-                        _StatCard(icon: Icons.speed, label: 'Kecepatan', value: '50 Mbps'),
-                        const SizedBox(width: 12),
-                        _StatCard(icon: Icons.signal_wifi_4_bar, label: 'Uptime', value: '98%'),
-                        const SizedBox(width: 12),
-                        _StatCard(icon: Icons.devices, label: 'Perangkat', value: '5'),
-                      ],
-                    ),
-                    const SizedBox(height: 20),
-
-                    // Status card
-                    Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.all(16),
-                      decoration: BoxDecoration(
-                        color: Appframe.primaryLight,
-                        borderRadius: BorderRadius.circular(16),
-                        border: Border.all(color: Appframe.primaryAccent),
-                      ),
-                      child: Row(
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.all(8),
-                            decoration: BoxDecoration(
-                              color: Appframe.primary,
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                            child: const Icon(Icons.check_circle, color: Colors.white, size: 20),
-                          ),
-                          const SizedBox(width: 12),
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              const Text('Paket Turbo 50 Mbps',
-                                  style: TextStyle(fontWeight: FontWeight.w600, color: Appframe.primaryDark)),
-                              Text('Status: Aktif',
-                                  style: TextStyle(fontSize: 13, color: Colors.green[700])),
-                            ],
-                          ),
-                          const Spacer(),
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                            decoration: BoxDecoration(
-                              color: Appframe.primary,
-                              borderRadius: BorderRadius.circular(20),
-                            ),
-                            child: const Text('AKTIF',
-                                style: TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w600)),
-                          )
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 20),
-
-                    Text('Menu Utama',
-                        style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600)),
-                    const SizedBox(height: 12),
-
-                    GridView.count(
-                      shrinkWrap: true,
-                      physics: const NeverScrollableScrollPhysics(),
-                      crossAxisCount: 2,
-                      mainAxisSpacing: 12,
-                      crossAxisSpacing: 12,
-                      childAspectRatio: 1.4,
-                      children: [
-                        _MenuCard(
-                          icon: Icons.inventory_2_outlined,
-                          label: 'Beli Paket',
-                          color: Appframe.primary,
-                          onTap: () => Navigator.push(context,
-                              MaterialPageRoute(builder: (_) => const Packagescreen())),
-                        ),
-                        _MenuCard(
-                          icon: Icons.receipt_long_outlined,
-                          label: 'Tagihan',
-                          color: const Color(0xFF2196F3),
-                          onTap: () {},
-                        ),
-                        _MenuCard(
-                          icon: Icons.router_outlined,
-                          label: 'Status Jaringan',
-                          color: const Color(0xFF9C27B0),
-                          onTap: () {},
-                        ),
-                        _MenuCard(
-                          icon: Icons.headset_mic_outlined,
-                          label: 'Bantuan',
-                          color: const Color(0xFFFF9800),
-                          onTap: () {},
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 20),
-
-                    // Promo banner
-                    Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.all(16),
-                      decoration: BoxDecoration(
-                        gradient: const LinearGradient(
-                          colors: [Appframe.primaryDark, Appframe.primary],
-                        ),
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                      child: Row(
-                        children: [
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: const [
-                                Text('Upgrade ke Giga!',
-                                    style: TextStyle(
-                                        color: Colors.white,
-                                        fontWeight: FontWeight.w700,
-                                        fontSize: 16)),
-                                SizedBox(height: 4),
-                                Text('300 Mbps, cocok untuk seluruh keluarga',
-                                    style: TextStyle(color: Colors.white70, fontSize: 12)),
-                              ],
-                            ),
-                          ),
-                          ElevatedButton(
-                            onPressed: () => Navigator.push(context,
-                                MaterialPageRoute(builder: (_) => const Packagescreen())),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.white,
-                              foregroundColor: Appframe.primary,
-                              minimumSize: const Size(80, 36),
-                              padding: const EdgeInsets.symmetric(horizontal: 16),
-                            ),
-                            child: const Text('Upgrade', style: TextStyle(fontSize: 13)),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 24),
-                  ],
-                ),
-              ),
-            ),
-          ],
-        ),
+      backgroundColor: Colors.white,
+      body: IndexedStack(
+        index: _currentIndex,
+        children: [
+          _HomeTab(displayName: displayName,identifier: widget.identifier, onLogout: () => _confirmLogout(context)),
+          Packagescreen(identifier: widget.identifier),
+          //_PlaceholderTab(icon: Icons.headset_mic_outlined, label: 'Bantuan'),
+          const ProfileScreen(),
+        ],
+      ),
+      bottomNavigationBar: _BottomNav(
+        currentIndex: _currentIndex,
+        onTap: (i) => setState(() => _currentIndex = i),
       ),
     );
   }
@@ -252,7 +64,7 @@ class HomeScreen extends StatelessWidget {
             onPressed: () {
               Navigator.pop(context);
               Navigator.pushReplacement(context,
-                  MaterialPageRoute(builder: (_) => const Login()));
+                  MaterialPageRoute(builder: (_) => const Loginscreen()));
             },
             style: ElevatedButton.styleFrom(minimumSize: const Size(80, 36)),
             child: const Text('Keluar'),
@@ -263,30 +75,405 @@ class HomeScreen extends StatelessWidget {
   }
 }
 
-class _StatCard extends StatelessWidget {
+// HOME TAB ---------------------------------------------------------
+
+class _HomeTab extends StatelessWidget {
+  final String displayName;
+  final String identifier;
+  final VoidCallback onLogout;
+  const _HomeTab({required this.displayName,required this.identifier, required this.onLogout});
+
+  @override
+  Widget build(BuildContext context) {
+    return SafeArea(
+      child: SingleChildScrollView(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // ── Header ---------------------------
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
+              decoration: const BoxDecoration(
+                color:Appframe.primary,
+                borderRadius: BorderRadius.only(
+                  bottomLeft: Radius.circular(28),
+                  bottomRight: Radius.circular(28),
+                ),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Row(
+                        children: [
+                          Container(
+                            width: 38,
+                            height: 38,
+                            decoration: BoxDecoration(
+                              color: Colors.white.withOpacity(0.2),
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            child: const Icon(Icons.wifi, color: Colors.white, size: 20),
+                          ),
+                          const SizedBox(width: 10),
+                          const Text('MyProvider',
+                              style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.w600)),
+                        ],
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 14),
+                  Text('Halo, $displayName !',
+                      style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 20,
+                          fontWeight: FontWeight.w700)),
+                  const SizedBox(height: 2),
+                  const Text('Paket aktif hingga 30 April 2025',
+                      style: TextStyle(color: Colors.white70, fontSize: 12)),
+                  const SizedBox(height: 20),
+
+                  // untuk sisa Pulsa, Sisa Kuota==============================
+                  Container(
+                    padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 8),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.15),
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    child: Row(
+                      children: [
+                        _HeaderStat(
+                          icon: Icons.account_balance_wallet_outlined,
+                          label: 'Sisa Pulsa',
+                          value: 'Rp 45.000',
+                        ),
+                        _vDivider(),
+                        _HeaderStat(
+                          icon: Icons.data_usage_outlined,
+                          label: 'Sisa Kuota',
+                          value: '12,5 GB',
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+            const SizedBox(height: 15),
+
+            // Main menus Icons======================================
+            /*Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 50),
+              child: Row(
+               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  /*_IconMenu(
+                    icon: Icons.inventory_2_outlined,
+                    label: 'Beli paket',
+                    color: Appframe.primary,
+                    onTap: () => Navigator.push(context,
+                        MaterialPageRoute(builder: (_) => Packagescreen(identifier: identifier))),
+                  ),
+                  const SizedBox(height: 20),
+                  _IconMenu(
+                    icon: Icons.receipt_long_outlined,
+                    label: 'Transaksi',
+                    color: Appframe.primary,
+                    onTap: () => Navigator.push(context,
+                        MaterialPageRoute(builder: (_) => const HistoryScreen())),
+                  ),
+                  _IconMenu(
+                    icon: Icons.card_giftcard_outlined,
+                    label: 'Kirim Hadiah',
+                    color: const Color(0xFFE91E63),
+                    onTap: () {},
+                  ),
+                  _IconMenu(
+                    icon: Icons.stars_outlined,
+                    label: 'Poin',
+                    color: const Color(0xFFFF9800),
+                    onTap: () {},
+                  ),*/
+                ],
+              ),
+            ),*/
+
+            const SizedBox(height: 15),
+
+            // ── Rekomendasi Paket ------------------
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text('Rekomendasi Paket',
+                      style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700)),
+                  GestureDetector(
+                    onTap: () => Navigator.push(context,
+                        MaterialPageRoute(builder: (_) => Packagescreen(identifier: identifier))),
+                    child: const Text('Lihat semua',
+                        style: TextStyle(fontSize: 13, color: Appframe.primary)),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 12),
+
+            
+            SizedBox(
+              height: 150,
+              child: ListView(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                scrollDirection: Axis.horizontal,
+                children:  
+                  availablePackages.map((package) => _PackageCard(  
+                  package: package,
+                  onTap: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                  builder: (_) => Paymentscreen(paymentType: PackagePayment(package)),
+                        ),
+                      ),
+                    ),
+                  ).toList(),
+              ),
+            ),
+
+            const SizedBox(height: 24),
+
+            // Isi Pulsa===================================================
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text('Isi Pulsa',
+                      style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700)),
+                  GestureDetector(
+                    onTap: ()  => Navigator.push(context,
+                        MaterialPageRoute(builder: (_) => Packagescreen(identifier: identifier))),
+                    child: const Text('Lihat semua',
+                        style: TextStyle(fontSize: 13, color: Appframe.primary)),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 12),
+
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: GridView.count(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                crossAxisCount: 4,
+                mainAxisSpacing: 10,
+                crossAxisSpacing: 10,
+                childAspectRatio: 1.1,
+                children: [
+                    _PulsaCard(amount: 'Rp 10.000', phoneNumber: identifier),
+                    _PulsaCard(amount: 'Rp 25.000', phoneNumber: identifier),
+                    _PulsaCard(amount: 'Rp 50.000', phoneNumber: identifier),
+                   _PulsaCard(amount: 'Rp 100.000', phoneNumber: identifier),
+                ],
+              ),
+            ),
+
+            const SizedBox(height: 32),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _vDivider() => Container(
+        width: 1,
+        height: 40,
+        color: Colors.white.withOpacity(0.3),
+        margin: const EdgeInsets.symmetric(horizontal: 4),
+      );
+}
+
+//Header ========================================================
+class _HeaderStat extends StatelessWidget {
   final IconData icon;
   final String label;
   final String value;
-  const _StatCard({required this.icon, required this.label, required this.value});
+  const _HeaderStat({required this.icon, required this.label, required this.value});
 
   @override
   Widget build(BuildContext context) {
     return Expanded(
+      child: Column(
+        children: [
+          Icon(icon, color: Colors.white70, size: 18),
+          const SizedBox(height: 4),
+          Text(value,
+              style: const TextStyle(
+                  color: Colors.white, fontWeight: FontWeight.w700, fontSize: 12),
+              textAlign: TextAlign.center),
+          Text(label,
+              style: const TextStyle(color: Colors.white60, fontSize: 10),
+              textAlign: TextAlign.center),
+        ],
+      ),
+    );
+  }
+}
+
+//Menu ICon ==========================================================
+class _IconMenu extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final Color color;
+  final VoidCallback onTap;
+  const _IconMenu(
+      {required this.icon,
+      required this.label,
+      required this.color,
+      required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Column(
+        children: [
+          Container(
+            width: 58,
+            height: 58,
+            decoration: BoxDecoration(
+              color: color.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: Icon(icon, color: color, size: 26),
+          ),
+          const SizedBox(height: 6),
+          Text(label,
+              style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w500),
+              textAlign: TextAlign.center),
+        ],
+      ),
+    );
+  }
+}
+
+// Paket Card ============================================
+class _PackageCard extends StatelessWidget {
+  final InternetPackage package;
+  final VoidCallback? onTap;
+  const _PackageCard(
+      { 
+    required this.package,
+    this.onTap,});
+
+  @override
+  Widget build(BuildContext context) {
+    // tag & warna berdasarkan id paket
+   /* final tagInfo = {
+      'basic': ('Hemat', const Color(0xFF4CAF50)),
+      'turbo': ('Terpopuler', Appframe.primary),
+      'ultra': ('Terbaik', const Color(0xFF9C27B0)),
+      'giga': ('Premium', const Color(0xFFE91E63)),
+    };
+    final tag = tagInfo[package.id]?.$1 ?? package.name;
+    final tagColor = tagInfo[package.id]?.$2 ?? Appframe.primary;*/
+
+    return GestureDetector(
+      onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
+        width: 148,
+        margin: const EdgeInsets.only(right: 12),
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: Colors.grey.shade100),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+              decoration: BoxDecoration(
+                //color: tagColor.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(20),
+              ),
+              /*child: Text(tag,
+                  style: TextStyle(
+                      color: tagColor,
+                      fontSize: 10,
+                      fontWeight: FontWeight.w600)),*/
+            ),
+            const SizedBox(height: 8),
+            Text(package.name,
+                style: const TextStyle(
+                    fontWeight: FontWeight.w700,
+                    fontSize: 16,
+                    color: Appframe.primaryDark)),
+            Text(package.quota,
+                style: const TextStyle(
+                    fontSize: 12,
+                    color: Appframe.primary,
+                    fontWeight: FontWeight.w500)),
+            const Spacer(),
+            Text('Rp ${package.pricePerMonth}',
+                style: const TextStyle(
+                    fontWeight: FontWeight.w700,
+                    fontSize: 13,
+                    color: Appframe.primaryDark)),
+            const Text('/bulan',
+                style: TextStyle(fontSize: 10, color: Colors.grey)),
+          ],
+        ),
+      ),
+    );
+  }
+  
+}
+
+// Pulsa Card
+class _PulsaCard extends StatelessWidget {
+  final String amount;
+  final String phoneNumber;
+  const _PulsaCard({required this.amount,required this.phoneNumber,});
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: () => Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => Paymentscreen(
+            paymentType: PulsaPayment(
+              amount: amount,
+              phoneNumber: phoneNumber, // ← identifier masuk sini
+              )
+            ),
+          ),
+        ),
+      child: Container(
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: Appframe.primaryAccent),
         ),
         child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(icon, color: Appframe.primary, size: 22),
+            const Icon(Icons.phone_android, color: Appframe.primary, size: 20),
             const SizedBox(height: 4),
-            Text(value,
+            Text(amount,
                 style: const TextStyle(
-                    fontWeight: FontWeight.w700, fontSize: 14, color: Appframe.primaryDark)),
-            Text(label,
-                style: const TextStyle(fontSize: 10, color: Colors.grey),
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                    color: Appframe.primaryDark),
                 textAlign: TextAlign.center),
           ],
         ),
@@ -295,40 +482,74 @@ class _StatCard extends StatelessWidget {
   }
 }
 
-class _MenuCard extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final Color color;
-  final VoidCallback onTap;
-  const _MenuCard({required this.icon, required this.label, required this.color, required this.onTap});
+// ─── BOTTOM NAV ──────────────────────────────────────────────────────────────
+class _BottomNav extends StatelessWidget {
+  final int currentIndex;
+  final ValueChanged<int> onTap;
+  const _BottomNav({required this.currentIndex, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
+    return BottomNavigationBar(
+      currentIndex: currentIndex,
       onTap: onTap,
-      child: Container(
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(16),
+      type: BottomNavigationBarType.fixed,
+      selectedItemColor: Appframe.primary,
+      unselectedItemColor: Colors.grey,
+      selectedLabelStyle:
+          const TextStyle(fontSize: 11, fontWeight: FontWeight.w600),
+      unselectedLabelStyle: const TextStyle(fontSize: 11),
+      backgroundColor: Colors.white,
+      elevation: 12,
+      items: const [
+        BottomNavigationBarItem(
+          icon: Icon(Icons.home_outlined),
+          activeIcon: Icon(Icons.home),
+          label: 'Home',
         ),
-        padding: const EdgeInsets.all(16),
-        child: Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: color.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: Icon(icon, color: color, size: 22),
-            ),
-            const SizedBox(width: 10),
-            Expanded(
-              child: Text(label,
-                  style: const TextStyle(fontWeight: FontWeight.w500, fontSize: 13)),
-            ),
-          ],
+        BottomNavigationBarItem(
+          icon: Icon(Icons.inventory_2_outlined),
+          activeIcon: Icon(Icons.inventory_2),
+          label: 'Beli',
         ),
+        /*BottomNavigationBarItem(
+          icon: Icon(Icons.headset_mic_outlined),
+          activeIcon: Icon(Icons.headset_mic),
+          label: 'Bantuan',
+        ),*/
+        BottomNavigationBarItem(
+          icon: Icon(Icons.person_outline),
+          activeIcon: Icon(Icons.person),
+          label: 'Akun',
+        ),
+      ],
+    );
+  }
+}
+
+// ─── PLACEHOLDER TAB ─────────────────────────────────────────────────────────
+class _PlaceholderTab extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  const _PlaceholderTab({required this.icon, required this.label});
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 60, color: Appframe.primaryAccent),
+          const SizedBox(height: 12),
+          Text('Halaman $label',
+              style: const TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w600,
+                  color: Appframe.primaryDark)),
+          const SizedBox(height: 8),
+          const Text('Segera hadir',
+              style: TextStyle(color: Colors.grey, fontSize: 14)),
+        ],
       ),
     );
   }

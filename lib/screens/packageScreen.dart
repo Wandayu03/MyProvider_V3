@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:internet_provider/models/paymentModel.dart';
+import 'package:internet_provider/models/pulsaPackage.dart';
 import 'package:internet_provider/theme/appframe.dart';
 import 'package:intl/intl.dart';
 import '../models/packageModel.dart';
@@ -6,59 +8,207 @@ import '../theme/appframe.dart';
 import 'paymentScreen.dart';
 
 class Packagescreen extends StatefulWidget {
-  const Packagescreen({super.key});
+  final String identifier;
+  const Packagescreen({super.key, required this.identifier});
 
   @override
   State<Packagescreen> createState() => _PackagescreenState();
 }
 
-class _PackagescreenState extends State<Packagescreen> {
+class _PackagescreenState extends State<Packagescreen>
+    with SingleTickerProviderStateMixin {
+  late TabController _tabController;
   InternetPackage? _selected;
   final _currency = NumberFormat.currency(locale: 'id_ID', symbol: 'Rp ', decimalDigits: 0);
+
+  @override
+  void initState() {
+    super.initState();
+    _tabController = TabController(length: 2, vsync: this);
+    _tabController.addListener(() {
+      if (_tabController.indexIsChanging) {
+        setState(() => _selected = null);
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _tabController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Pilih Paket'),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new, color: Colors.white),
-          onPressed: () => Navigator.pop(context),
+        title: const Text('Beli Paket'),
+        bottom: TabBar(
+          controller: _tabController,
+          indicatorColor: Colors.white,
+          labelColor: Colors.white,
+          unselectedLabelColor: Colors.white60,
+          onTap: (_) => setState(() => _selected = null),
+          tabs: const [
+            Tab(text: 'Kuota Internet'),
+            Tab(text: 'Pulsa'),
+          ],
         ),
       ),
-      body: Column(
+      body: TabBarView(
+        controller: _tabController,
         children: [
-          Expanded(
-            child: ListView(
-              padding: const EdgeInsets.all(16),
-              children: [
-                Text('Pilih paket internet sesuai kebutuhan Anda',
-                    style: TextStyle(color: Colors.grey[600], fontSize: 14)),
-                const SizedBox(height: 16),
-                ...availablePackages.map((pkg) => _PackageCard(
-                      package: pkg,
-                      isSelected: _selected?.id == pkg.id,
-                      currency: _currency,
-                      onTap: () => setState(() => _selected = pkg),
-                    )),
-                const SizedBox(height: 100),
-              ],
-            ),
+          // Tab Kuota
+          ListView(
+            padding: const EdgeInsets.all(16),
+            children: [
+              ...availablePackages.map((pkg) => _PackageCard(
+                    package: pkg,
+                    isSelected: _selected?.id == pkg.id,
+                    currency: _currency,
+                    onTap: () => setState(() => _selected = pkg),
+                  )),
+              const SizedBox(height: 100),
+            ],
+          ),
+
+          // Tab PULSA
+          _PulsaTab(
+            phoneNumber: widget.identifier,
+            currency: _currency,
           ),
         ],
       ),
-      bottomNavigationBar: _selected != null
-          ? _BottomBar(package: _selected!, currency: _currency, onLanjut: _goToPembayaran)
+      
+      bottomNavigationBar: _tabController.index == 0 && _selected != null
+          ? _BottomBar(
+              package: _selected!,
+              currency: _currency,
+              onLanjut: _goToPayment,
+            )
           : null,
     );
   }
 
-  void _goToPembayaran() {
+  void _goToPayment() {
     if (_selected == null) return;
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (_) => PembayaranScreen(package: _selected!),
+        builder: (_) => Paymentscreen(
+          paymentType: PackagePayment(_selected!),
+        ),
+      ),
+    );
+  }
+}
+
+// ── Pulsa Tab-----------
+  class _PulsaTab extends StatelessWidget {
+  final String phoneNumber;
+  final NumberFormat currency;
+
+  const _PulsaTab({required this.phoneNumber, required this.currency});
+
+  @override
+  Widget build(BuildContext context) {
+  return ListView(
+    padding: const EdgeInsets.all(16),
+    children: [
+      ...availablePulsa.map((pulsa) => GestureDetector(
+        onTap: () => Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => Paymentscreen(
+              paymentType: PulsaPayment(
+                amount: currency.format(pulsa.nominal),
+                phoneNumber: phoneNumber,
+              ),
+            ),
+          ),
+        ),
+        child: Container(
+          margin: const EdgeInsets.only(bottom: 12),
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: Colors.grey.shade200),
+          ),
+          child: Row(
+            children: [
+              Container(
+                width: 44,
+                height: 44,
+                decoration: BoxDecoration(
+                  color: Appframe.primaryLight,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: const Icon(Icons.phone_android, color: Appframe.primary, size: 24),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(currency.format(pulsa.nominal),
+                        style: const TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.w700,
+                            color: Appframe.primaryDark)),
+                    const Text('Pulsa reguler',
+                        style: TextStyle(fontSize: 12, color: Colors.grey)),
+                  ],
+                ),
+              ),
+              const Icon(Icons.arrow_forward_ios, size: 14, color: Colors.grey),
+            ],
+          ),
+        ),
+      )).toList(),
+    ],
+  );
+}
+}
+
+// ── Pulsa Nominal Card ────────────────────────────────────────────────────────
+class _PulsaNominalCard extends StatelessWidget {
+  final PulsaPackage pulsa;
+  final NumberFormat currency;
+  final VoidCallback onTap;
+
+  const _PulsaNominalCard({
+    required this.pulsa,
+    required this.currency,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: Appframe.primaryAccent),
+        ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(Icons.phone_android, color: Appframe.primary, size: 24),
+            const SizedBox(height: 6),
+            Text(
+              currency.format(pulsa.nominal),
+              style: const TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w700,
+                color: Appframe.primaryDark,
+              ),
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -128,7 +278,7 @@ class _PackageCard extends StatelessWidget {
               children: [
                 const Icon(Icons.speed, size: 16, color: Appframe.primary),
                 const SizedBox(width: 4),
-                Text(package.speed,
+                Text(package.quota,
                     style: const TextStyle(fontWeight: FontWeight.w600, color: Appframe.primary)),
                 const SizedBox(width: 8),
                 Expanded(
