@@ -1,9 +1,10 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import '../models/pulsaPackage.dart';
+import '../url/config.dart';
 
 class PulsaService {
-  final String baseUrl = 'http://10.0.2.2:8000/api';
+  final String baseUrl = AppConfig.baseUrl;
 
   Future<List<PulsaPackage>> getPulsa() async {
     final response = await http.get(

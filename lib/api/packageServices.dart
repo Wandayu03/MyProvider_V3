@@ -1,9 +1,10 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import '../models/packageModel.dart';
+import '../url/config.dart';
 
 class PackageService {
-  final String baseUrl = 'http://10.0.2.2:8000/api';
+  final String baseUrl = AppConfig.baseUrl;
 
   Future<List<InternetPackage>> getPackages() async {
     final response = await http.get(

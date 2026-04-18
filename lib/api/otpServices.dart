@@ -1,9 +1,9 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import '../url/config.dart';
 
 class OtpService {
-  // Pakai IP ini supaya emulator bisa akses localhost PC
-  static const String _baseUrl = 'http://10.0.2.2:8000/api';
+  static const String _baseUrl = AppConfig.baseUrl;
 
   // Send OTP
   static Future<Map<String, dynamic>> sendOtp(String phone) async {
