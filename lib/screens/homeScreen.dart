@@ -13,6 +13,7 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:intl/intl.dart';
 import 'package:flutter/src/widgets/basic.dart' hide SizedBox;
+import '../url/config.dart';
 
 
 class HomeScreen extends StatefulWidget {
@@ -115,7 +116,7 @@ class _HomeTabState extends State<_HomeTab> {
   Future<void> _fetchPackages() async {
     try {
       final response = await http.get(
-        Uri.parse('http://10.0.2.2:8000/api/packages'),
+        Uri.parse('${AppConfig.baseUrl}/packages'),
         headers: {'Accept': 'application/json'},
       );
       if (response.statusCode == 200) {
@@ -135,7 +136,7 @@ class _HomeTabState extends State<_HomeTab> {
   Future<void> _fetchPulsa() async {
     try {
       final response = await http.get(
-        Uri.parse('http://10.0.2.2:8000/api/pulsa'),
+        Uri.parse('${AppConfig.baseUrl}/pulsa'),
         headers: {'Accept': 'application/json'},
       );
 
@@ -157,7 +158,7 @@ class _HomeTabState extends State<_HomeTab> {
   Future<void> _fetchUser() async {
     try {
       final response = await http.get(
-        Uri.parse('http://10.0.2.2:8000/api/user/${widget.identifier}'),
+        Uri.parse('${AppConfig.baseUrl}/user/${widget.identifier}'),
       );
 
       if (response.statusCode == 200) {
