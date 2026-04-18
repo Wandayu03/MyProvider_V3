@@ -3,7 +3,8 @@ import 'package:internet_provider/theme/appframe.dart';
 import 'package:intl/intl.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
- 
+import '../url/config.dart';
+
 // Model=======================
  
 enum HistoryType { paket, pulsa }
@@ -54,7 +55,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
   Future<void> fetchHistory() async {
     try {
       final response = await http.get(
-        Uri.parse('http://10.0.2.2:8000/api/payments/${widget.phoneNumber}'),
+        Uri.parse('${AppConfig.baseUrl}/payments/${widget.phoneNumber}'),
       );
 
       if (response.statusCode == 200) {
